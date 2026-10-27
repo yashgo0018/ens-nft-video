@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENS NFT Video</title>
+<meta name="description" content="Download the animation of an ENSv2 commemorative NFT as an MP4.">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --text: #15171a;
+    --muted: #646b76;
+    --border: #dfe3e8;
+    --accent: #3889ff;
+    --accent-text: #ffffff;
+    --error: #c62828;
+    --track: #e9edf2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101215;
+      --surface: #181b20;
+      --text: #eceef1;
+      --muted: #99a1ad;
+      --border: #2a2f37;
+      --accent: #5c9dff;
+      --accent-text: #0b0d10;
+      --error: #ff6b6b;
+      --track: #262b33;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101215;
+    --surface: #181b20;
+    --text: #eceef1;
+    --muted: #99a1ad;
+    --border: #2a2f37;
+    --accent: #5c9dff;
+    --accent-text: #0b0d10;
+    --error: #ff6b6b;
+    --track: #262b33;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lede { color: var(--muted); margin: 0 0 28px; }
+  form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    display: grid;
+    gap: 12px;
+  }
+  label { font-size: 13px; color: var(--muted); }
+  input, select {
+    width: 100%;
+    font: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+  .row > div { flex: 1 1 180px; display: grid; gap: 6px; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    border: 0;
+    border-radius: 10px;
+    padding: 11px 20px;
+    background: var(--accent);
+    color: var(--accent-text);
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #status { margin: 20px 0 8px; min-height: 1.5em; color: var(--muted); overflow-wrap: anywhere; }
+  #status.error { color: var(--error); }
+  progress {
+    width: 100%;
+    height: 6px;
+    appearance: none;
+    border: 0;
+    border-radius: 3px;
+    background: var(--track);
+    overflow: hidden;
+  }
+  progress::-webkit-progress-bar { background: var(--track); }
+  progress::-webkit-progress-value { background: var(--accent); }
+  progress::-moz-progress-bar { background: var(--accent); }
+  .stage { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; align-items: flex-start; }
+  /* The artwork sizes itself to its window, so the iframe keeps the card's
+     native 1080x1400 and is only visually scaled down. */
+  #preview {
+    width: 270px;
+    height: 350px;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #000;
+    position: relative;
+    flex: none;
+  }
+  #preview iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1080px;
+    height: 1400px;
+    border: 0;
+    transform: scale(0.25);
+    transform-origin: 0 0;
+  }
+  #result { display: grid; gap: 10px; flex: 1 1 240px; }
+  #result video { width: 100%; max-width: 270px; border-radius: 12px; border: 1px solid var(--border); }
+  #download {
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 11px 20px;
+    background: var(--accent);
+    color: var(--accent-text);
+    width: fit-content;
+  }
+  [hidden] { display: none !important; }
+  .note { color: var(--muted); font-size: 13px; margin-top: 28px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ENS commemorative NFT video</h1>
+  <p class="lede">Paste an OpenSea link to an ENSv2 commemorative NFT and download its animation as an MP4. Rendering happens in your browser, frame by frame, so the loop is seamless.</p>
+
+  <form id="form">
+    <div style="display:grid;gap:6px">
+      <label for="input">OpenSea URL or token ID</label>
+      <input id="input" required autocomplete="off" spellcheck="false"
+        placeholder="https://opensea.io/item/ethereum/0x20262e3433306a4ff250a64d20a8e0f09b2c7f68/…">
+    </div>
+    <div class="row">
+      <div>
+        <label for="scale">Resolution</label>
+        <select id="scale">
+          <option value="1">1080 × 1400</option>
+          <option value="2">2160 × 2800</option>
+        </select>
+      </div>
+      <div>
+        <label for="loops">Length</label>
+        <select id="loops">
+          <option value="1">10 s (one loop)</option>
+          <option value="2">20 s (two loops)</option>
+          <option value="3">30 s (three loops)</option>
+        </select>
+      </div>
+      <button id="go" type="submit">Render video</button>
+    </div>
+  </form>
+
+  <div id="status" role="status"></div>
+  <progress id="progress" value="0" max="1" hidden></progress>
+
+  <div class="stage">
+    <div id="preview" hidden></div>
+    <div id="result" hidden>
+      <video id="video" controls loop muted playsinline></video>
+      <a id="download" download>Download MP4</a>
+    </div>
+  </div>
+
+  <p class="note">Contract 0x20262e3433306a4ff250a64d20a8e0f09b2c7f68. Needs a browser with WebCodecs (recent Chrome, Edge, Safari or Firefox).</p>
+</main>
+
+<script type="module">
+import { Muxer, ArrayBufferTarget } from "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.mjs";
+
+const CONTRACT = "0x20262e3433306a4ff250a64d20a8e0f09b2c7f68";
+const RPC_URL = "https://ethereum-rpc.publicnode.com";
+const CARD_WIDTH = 1080;
+const CARD_HEIGHT = 1400;
+const FPS = 60;
+
+const $ = (id) => document.getElementById(id);
+const form = $("form"), input = $("input"), go = $("go");
+const statusEl = $("status"), progress = $("progress");
+const preview = $("preview"), result = $("result"), video = $("video"), download = $("download");
+
+function setStatus(text, isError = false) {
+  statusEl.textContent = text;
+  statusEl.classList.toggle("error", isError);
+}
+
+function parseTokenId(value) {
+  value = value.trim();
+  if (/^\d+$/.test(value)) return value;
+  let url;
+  try { url = new URL(value); } catch { throw new Error("Enter an OpenSea URL or a token ID."); }
+  // opensea.io/item/ethereum/<contract>/<id> or opensea.io/assets/ethereum/<contract>/<id>
+  const parts = url.pathname.split("/").filter(Boolean);
+  const i = parts.findIndex((p) => p.toLowerCase() === CONTRACT);
+  if (i === -1 || !/^\d+$/.test(parts[i + 1] ?? "")) {
+    throw new Error("That link isn't an ENS commemorative NFT.");
+  }
+  return parts[i + 1];
+}
+
+async function fetchMetadata(tokenId) {
+  const data = "0xc87b56dd" + BigInt(tokenId).toString(16).padStart(64, "0");
+  const res = await fetch(RPC_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: CONTRACT, data }, "latest"] }),
+  });
+  const { result, error } = await res.json();
+  if (error || !result || result === "0x") throw new Error("This token doesn't exist on the contract.");
+  const hex = result.slice(2);
+  const offset = parseInt(hex.slice(0, 64), 16) * 2;
+  const len = parseInt(hex.slice(offset, offset + 64), 16) * 2;
+  const bytes = hex.slice(offset + 64, offset + 64 + len).match(/../g).map((b) => parseInt(b, 16));
+  const uri = new TextDecoder().decode(new Uint8Array(bytes));
+  const meta = await fetch(uri);
+  if (!meta.ok) throw new Error(`Metadata fetch failed (HTTP ${meta.status}).`);
+  return meta.json();
+}
+
+// Load the artwork through our /art proxy so it is same-origin and its
+// window.ens app can be stepped frame by frame.
+function loadArtwork(tokenId) {
+  preview.replaceChildren();
+  const iframe = document.createElement("iframe");
+  iframe.title = "Artwork";
+  iframe.src = `/art/?tokenId=${tokenId}`;
+  preview.append(iframe);
+  preview.hidden = false;
+  return new Promise((resolve, reject) => {
+    const t0 = Date.now();
+    const poll = () => {
+      let win;
+      try { win = iframe.contentWindow; } catch { return reject(new Error("Artwork page is not same-origin.")); }
+      const app = win?.ens;
+      const err = win?.document?.querySelector(".error");
+      if (app?.rendererFailed || err) return reject(new Error(err?.textContent || "The artwork failed to render."));
+      if (app?.rendererReady) return setTimeout(() => resolve(app), 1500);
+      if (Date.now() - t0 > 60000) return reject(new Error("Timed out loading the artwork."));
+      setTimeout(poll, 100);
+    };
+    poll();
+  });
+}
+
+async function pickCodec(width, height) {
+  for (const codec of ["avc1.640034", "avc1.4d0034", "avc1.640033", "avc1.42003e"]) {
+    const config = { codec, width, height, framerate: FPS, bitrate: 14_000_000 * (width / CARD_WIDTH) ** 2 };
+    const { supported } = await VideoEncoder.isConfigSupported(config);
+    if (supported) return config;
+  }
+  throw new Error("Your browser can't encode H.264 at this resolution. Try 1080 × 1400 or Chrome.");
+}
+
+async function render(event) {
+  event.preventDefault();
+  if (!("VideoEncoder" in window)) {
+    setStatus("This browser doesn't support WebCodecs. Try a recent Chrome, Edge, Safari or Firefox.", true);
+    return;
+  }
+  const scale = Number($("scale").value);
+  const loops = Number($("loops").value);
+  go.disabled = true;
+  result.hidden = true;
+  progress.hidden = true;
+  if (download.href) URL.revokeObjectURL(download.href);
+
+  try {
+    const tokenId = parseTokenId(input.value);
+    setStatus("Looking up the token…");
+    const meta = await fetchMetadata(tokenId);
+    const name = meta.name || tokenId;
+
+    setStatus(`Loading artwork for ${name}…`);
+    const app = await loadArtwork(tokenId);
+
+    // Render at the card's native size regardless of this screen's pixel ratio.
+    app.sizes.width = CARD_WIDTH;
+    app.sizes.height = CARD_HEIGHT;
+    app.sizes.pixelRatio = scale;
+    app.sizes.trigger("resize");
+    app.time.captureMode = true;
+    const { width, height } = app.canvas;
+
+    const config = await pickCodec(width, height);
+    const muxer = new Muxer({
+      target: new ArrayBufferTarget(),
+      video: { codec: "avc", width, height, frameRate: FPS },
+      fastStart: "in-memory",
+    });
+    let encodeError = null;
+    const encoder = new VideoEncoder({
+      output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+      error: (e) => { encodeError = e; },
+    });
+    encoder.configure(config);
+
+    const totalFrames = app.time.loopFrames * loops;
+    const frameUs = 1e6 / FPS;
+    progress.max = totalFrames;
+    progress.value = 0;
+    progress.hidden = false;
+
+    for (let f = 0; f < totalFrames; f++) {
+      if (encodeError) throw encodeError;
+      // The WebGL canvas doesn't preserve its drawing buffer, so the frame
+      // must be grabbed in the same task as the render.
+      app.time.stepCapture(f % app.time.loopFrames);
+      if (app.rendererFailed) throw new Error(`The artwork failed at frame ${f}.`);
+      const frame = new VideoFrame(app.canvas, { timestamp: Math.round(f * frameUs), duration: Math.round(frameUs) });
+      encoder.encode(frame, { keyFrame: f % FPS === 0 });
+      frame.close();
+      while (encoder.encodeQueueSize > 8) await new Promise((r) => encoder.addEventListener("dequeue", r, { once: true }));
+      if (f % 5 === 0 || f === totalFrames - 1) {
+        progress.value = f + 1;
+        setStatus(`Rendering ${name}: frame ${f + 1} of ${totalFrames}`);
+        await new Promise((r) => setTimeout(r));
+      }
+    }
+
+    setStatus("Finishing the MP4…");
+    await encoder.flush();
+    if (encodeError) throw encodeError;
+    encoder.close();
+    muxer.finalize();
+
+    const blob = new Blob([muxer.target.buffer], { type: "video/mp4" });
+    const url = URL.createObjectURL(blob);
+    video.src = url;
+    download.href = url;
+    download.download = `${name}.mp4`;
+    download.textContent = `Download ${name}.mp4 (${(blob.size / 1e6).toFixed(1)} MB)`;
+    result.hidden = false;
+    preview.hidden = true;
+    preview.replaceChildren();
+    setStatus(`Done: ${width} × ${height}, ${(totalFrames / FPS).toFixed(0)} s at ${FPS} fps.`);
+  } catch (e) {
+    console.error(e);
+    setStatus(e.message || String(e), true);
+  } finally {
+    go.disabled = false;
+  }
+}
+
+form.addEventListener("submit", render);
+
+const params = new URLSearchParams(location.search);
+const prefill = params.get("url") || params.get("tokenId");
+if (prefill) input.value = prefill;
+</script>
+</body>
+</html>
