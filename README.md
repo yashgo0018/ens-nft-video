@@ -20,7 +20,8 @@ then [`web/index.html`](web/index.html) steps each frame and encodes it with
 WebCodecs and [mp4-muxer](https://github.com/Vanilagy/mp4-muxer). Needs a
 browser with WebCodecs `VideoEncoder`.
 
-Deploy:
+Pushes to `main` deploy to production automatically (Vercel project
+`ens-nft-video`, root directory `web`). To deploy by hand:
 
 ```bash
 cd web && vercel deploy --prod
